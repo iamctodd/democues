@@ -1,0 +1,15 @@
+from celery import shared_task
+from stripe.error import StripeError
+
+from apps.teams.models import Team
+
+from .helpers import sync_subscription_model_with_stripe
+
+
+@shared_task
+def sync_subscriptions_task():
+    for team in Team.get_items_needing_sync():
+        try:
+            sync_subscription_model_with_stripe(team)
+        except StripeError as e:
+            raise  # you may want to swallow and log this error so it doesn't prevent other subscriptions from syncing
